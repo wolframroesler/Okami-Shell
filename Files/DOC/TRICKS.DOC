@@ -1,0 +1,430 @@
+
+              ===============================================
+
+
+@(#)            OKAMI SHELL VERSION 1.5 - TIPS UND TRICKS
+
+
+              ===============================================
+                             Stand: 19.9.1992
+
+
+
+
+        BITTE ERST DIE DATEIEN README UND OKAMI.DOC LESEN!
+
+----------------------------------------------------------------------------
+
+
+
+INHALT
+
+
+        Profile
+        Aufruf von Programmen
+        Benutzung der Shell von Diskette aus
+        Beispiel-Shellscripts
+                okback.sh
+                e.sh
+                showpic.sh
+                startprg.sh
+        Shell-Funktionen
+        Die gemexec-Funktion
+        Die screensave-Funktion
+        Speichern und Restaurieren der Shell-Einstellungen
+        MS-DOS-GefÅhle
+        C-Shell-GefÅhle
+        Andere Shells: Gulam, Master und bash
+        Die Versionsnummer der Shell
+        Diverses
+                Trikolor-Bildschirm
+                Aufruf vom Desktop
+                Uneindeutige Kommandonamen
+                Compiler-Aufruf
+                éndern von Dateinamen-Extendern
+                Programmierung des UPN-Rechners
+
+----------------------------------------------------------------------------
+
+
+
+PROFILE
+
+Ich benutze das folgende Profile zum Konfigurieren der Shell. 
+
+        # Okami-Shell - System-Profile
+
+
+        # Terminaleinstellung (fÅr Termcap etc.)
+        TERM=st
+        # Cursor etwas schneller blinkend
+        cursor +bv 12
+        # Aktuelles Directory im Prompt anzeigen
+        PS1=['$CWD'] ^^^$'  '
+        # Pipes auf die Ramdisk
+        PIPDIR=M:\
+        # Nach Ende der Shell CWD sichern...
+        set +s
+        # ...und den Cursor abschalten
+        trap cursor -v
+        # Directories trennen wie in Unix mit Slash
+        set +b
+        # anmelden als Applikation, sollte man immer machen
+        gon
+        # Word Wrap On
+        echo ^033v
+
+
+        # Bidschirm lîschen durch viele Leerzeilen
+        echo "^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n^n"
+
+
+        # Einschaltmeldung
+        echo
+        echo Atari Mega-ST 4 ($TERM)
+        # Versionsnummer der Shell, des TOS und von MiNT
+        ver -otM
+        echo
+        # Ausgabe des Datums des letzten Logins
+        cat lastlog 2>NULL:
+        echo
+        # Ausgabe des freien Speichers
+        echo Free RAM: `mem` Bytes
+        echo
+        # Ausgabe in invertierter Schrift
+        echo ^033pType help for command survey.^033q
+        echo
+        # Datum speichern
+        echo Last Login: `date` >lastlog
+        # Letztes CWD zurÅckholen
+        cd `cat wdir`
+
+
+Laufwerk M ist eine Ramdisk,  die die Aufgabe hat,  die Pipe-Operationen
+zu  beschleunigen.   Dadurch,   daû die Pipe auf die Ramdisk gelegt wird
+(PIPDIR=M:\), erfolgen alle Pipe-Operationen ohne Plattenzugriff. 
+Durch  die Einstellung "set +s"  wird die Shell veranlaût,  vor dem Pro-
+grammende das aktuelle Verzeichnis in die Datei $HOME\wdir zu schreiben.
+Das Profile benutzt diese Datei,  um das aktuelle Verzeichnis wieder auf
+den  alten Wert einzustellen.  So ist man nach dem Start der Shell immer
+in dem Verzeichnis,  in dem man war, als man die Shell zuletzt verlassen
+hatte. 
+
+Durch die Einstellung "set +x"  werden in einer Eingabe alle Slashes (/)
+in  Backslashes  (\)   umgeformt,   wodurch  man  die  Mîglichkeit  hat,
+Dateinamen  wie  in  Unix  einzugeben,   also  shell/bin/sh.ttp  anstatt
+shell\bin\sh.ttp. NatÅrlich erzeugt dann das Kommando 
+                              echo 6/3=2 
+die Ausgabe 
+                                 6\3=2 
+,  da alle Slashes umgeformt werden, aber das stîrt normalerweise nicht.
+(den UPN-Rechner stîrt es Åbrigens auch nicht,  da er den Backslash als-
+Divisionszeichen versteht. Aus "upn 6 3 /" wird also "upn 6 3 \".) 
+Auûerdem  kann  man  sich  in  NotfÑllen mit einfachen AnfÅhrungszeichen
+retten, 
+                             echo '6/3=2' 
+ergibt also immer 
+                                 6/3=2 
+. 
+
+----------------------------------------------------------------------------
+
+
+
+AUFRUF VON PROGRAMMEN
+
+(Der  folgende Abschnitt ist im wesentlichen fÅr Festplattenbenutzer von
+Interesse.) 
+
+Viele Programme gehen davon aus,  das sich gewisse Dateien wie z.B. RSCs
+im  aktuellen Verzeichnis befinden.  Um ein solches Kommando zu starten,
+muû  man  also  mit cd in das jeweilige Verzeichnis wechseln,  was unter
+UmstÑnden einige Tipparbeit macht,  vor allem bei einer Festplatte.  Mit
+der  Okami-Shell ist es mîglich,  Programme von Åberall,  also von jedem
+beliebigen aktuellen Verzeichnis aus zu starten. 
+Es   sei   z.B.   GEMTEST.PRG   ein   Programm,   das   im   Verzeichnis
+D:\PROG\GEMTEST  steht  und eine RSC-Datei aus dem aktuellen Verzeichnis
+nachladen muû. 
+Zum Start des Programms mÅûte man also eingeben 
+
+        cd d:\prog\gemtest
+        gemtest
+
+Man kann allerdings auch so vorgehen: 
+
+Man  erzeugt sich eine Datei namens GEMTEST.SH im Verzeichnis $HOME\bin,
+die ungefÑhr so aussieht: 
+
+        A=`set -`
+        set +x
+        d:\prog\gemtest.prg
+        set $A
+        unset A
+
+Zuerst  wird  die aktuelle Einstellung der Flags in der Shellvariablen A
+gespeichert,  danach  wird  das  Flag  x  aktiviert.  Wenn  dieses  Flag
+aktiviert ist, fÅhrt die Shell vor dem Start eines BinÑrprogramms ein cd
+in das Directory aus,  in dem sich das Programm befindet.  Nach dem Ende
+des Programms wird das ursprÅngliche Directory wieder restauriert. 
+Danach wird das Programm gestartet. 
+Nach  Programmende  werden  die Shell-Flags werden auf den gespeicherten
+Wert  zurÅckgesetzt.   Danach  wird die lokal verwendete Shellvariable A
+freigegeben. 
+
+Wenn das Flag -x immer gesetzt ist,  kann man denselben Effekt erreichen
+durch: 
+
+                hash gemtest d:/prg/gemtest/gemtest.prg 
+
+Normalerweise  ist  das Flag x immer aktiviert.  Programme,  die sich in
+einem der in der Shellvariablen PATH gespeicherten Directories befinden,
+werden also immer korrekt gestartet, indem man nur ihren Namen eingibt. 
+
+----------------------------------------------------------------------------
+
+
+
+BENUTZUNG DER SHELL VON DISKETTE AUS
+
+Wenn  mîglich,   sollte  man die Shell auf einem schnellen Massespeicher
+wie  Festplatte  oder Ramdisk installieren.  Wer die Shell hauptsÑchlich
+mit Disketten benutzt,  Ñrgert sich vermutlich darÅber,  daû es ziemlich
+lange  dauert,  bis ein falsch eingetipptes Kommando als solches erkannt
+wird,   da  die  Shell  in allen mîglichen Ordnern auf der Diskette nach
+einer passenden Datei sucht.  Mit den folgenden Einstellungen im Profile
+kann die An- zahl dieser Suchoperationen minimiert werden: 
+
+        PATH=.,$HOME\bin
+        CDPATH=.
+
+Wenn  man  den Programm-Suchpfad auf das aktuelle Directory abkÅrzt (mit
+der   Einstellung   "PATH=."),    werden  noch  weniger  Suchoperationen
+durchgefÅhrt,  man kann dann allerdings die mitgelieferten externen Kom-
+mandos,   die  sich  in dem Directory $HOME\bin befinden sollten,  nicht
+mehr von Åberallher durch den einfachen Kommandonamen aufrufen,  sondern
+muû  den  ganzen  Pfad  angeben  (z.B.  nicht einfach "format",  sondern
+"$HOME\bin\format.ttp"). 
+
+----------------------------------------------------------------------------
+
+
+
+BEISPIEL-SHELLSCRIPTS
+
+
+
+1) okback.sh
+Ich  benutze  das  folgende Shellscript zum Sichern der Quelldateien der
+Shell auf Diskette. Es wird ein lzh-Archiv auf der Diskette angelegt, in
+das  die  seit  dem  letzten Backup geÑnderten Dateien hineingeschrieben
+werden. 
+
+        # TemporÑr-Directory
+        DIR=M:/tmp/okbak
+        # Liste der zu sichernden Dateien
+        FILES=*.c *.h sh.prj doc/*.nr
+
+
+        alert stop 1 "Bitte die Okami-Backup-^|Diskette einlegen."      ^
+                "Ok^|Abbruch" ERG
+        if [ $ERG = 2 ]
+        then
+          exit
+        fi
+
+
+        # Temp-Dir anlegen und Archiv von der Diskette hineinkopieren
+        mkdir -r $DIR/
+        cp -v a:/okbak.lzh $DIR
+
+
+        # geÑnderte Dateien ins Archiv einfÅgen.
+        # lharc ist ein externes Kommando.
+        lharc a -by $DIR/okbak.lzh $FILES
+
+
+        # Archiv wieder auf Diskette speichern
+        cp -v $DIR/okbak.lzh a:/
+        # Log-Eintrag auf der Diskette erzeugen
+        echo Okami-Source-Backup vom `date` >>a:/okbak.log
+
+
+        # Temp-Directory entfernen
+        rm -r $DIR
+        unset DIR FILES ERG
+
+
+
+2) e.sh
+Das  Shellscript  e.sh dient zum Aufruf des Editors.  Das Editorprogramm
+befindet  sich  in der Datei $HOME\bin\editor.prg.  Durch die Verwendung
+dieses  Shellscripts ist es mîglich,  irgendwo im Dateisystem den Editor
+fÅr irgendeine Datei aufzurufen. 
+
+        FILE=$*
+        if [ -v FILE ]
+        then
+          FILE=$EFILE
+        fi
+        FILE=`fullname $FILE`
+        $HOME/bin/editor.prg $FILE
+        EFILE=$FILE
+        unset FILE
+
+Der  Name  der  zu  editerenden  Datei  wird  dem  Script  als Parameter
+Åbergeben. 
+Die  Zeile  "FILE=`fullname  $FILE`"   erzeugt in der Variablen FILE den
+absoluten  Dateinamen,   der  dem Editorprogramm als Parameter Åbergeben
+wird. 
+
+Wenn  dieses  Script ohne Parameter aufgerufen wird,  so wird der in der
+Shellvariablen EFILE gespeicherte Dateiname benutzt. In dieser Variablen
+wird nach jedem Editoraufruf der jeweilige Dateiname gespeichert, so daû
+man,   wenn man dieselbe Datei mehrmals hintereinander editieren mîchte,
+den Dateinamen nur einmal angeben muû: 
+
+        e datei.txt                     editieren von datei.txt
+        e datei2.txt                    editieren von datei2.txt
+        e                               ebenfalls datei2.txt
+
+Ggfs.   muû  man  dieses  Script  noch erweitern,  um dem Editor mehrere
+Parameter  zu  Åbergeben  (fÅr  den  Micro-Emacs  z.B.   den  Namen  der
+Konfigurationsdatei o.Ñ.). 
+
+
+3) showpic.sh
+Dieses  Script  zeigt,   wie man die Shell programmieren kann.  Es dient
+dazu,  Bilddateien,  die  im  Bitmap-Screenformat  abgespeichert  wurden
+(DateilÑnge  >32000  Bytes),   zu  laden  und anzuzeigen.  Es gehîrt zum
+Lieferumfang  der  Shell,   die  Bedienungsanleitung  befindet  sich  in
+commands.doc. 
+
+
+4) startprg.sh
+Die  Idee zu diesem Shellscript stammt von Thomas Behrens aus Eschweiler
+und lautet,  ein Programm in einer Fileselectbox auszuwÑhlen und dann zu
+starten. Dazu genÅgt eigentlich die folgende Zeile: 
+
+                            fsel | xargs {} 
+
+oder noch einfacher 
+
+                                `fsel` 
+
+,   wenn  man  aber den Abbruch-Button der Box abtesten und dem Programm
+eine   Parameterzeile  Åbergeben  will,   sollte  man  folgendes  Script
+benutzen: 
+
+        FILE=`fsel *.* "" KEY "Welches Programm ausfÅhren?"`
+        if [ $KEY = 1 ]
+        then
+          echo "Bitte Kommandozeile eingeben:"
+          read CMD
+          $FILE $CMD
+        fi
+        unset FILE KEY CMD
+
+Beide  Lîsungen  funktionieren  Åbrigens  sowohl mit BinÑrprogrammen als
+auch mit Shellscripts. 
+
+---------------------------------------------------------------------------
+
+
+
+SHELL-FUNKTIONEN
+
+NatÅrlich  sollte  man  alle  hÑufig  gebrauchten  Shellscripts resident
+halten, und zwar als Shellfunktionen. Es ist mîglich, ein Shellscript so
+zu  schreiben,   daû  es  sich  beim  ersten  Aufruf selber als Funktion
+installiert; bei allen weiteren Aufrufen wird dann die Funktion benutzt.
+
+
+Sei  z.B.   folgendes Shellscript in der Datei hallo.sh,  also unter dem
+Namen hallo aufzurufen: 
+
+        echo Hallo Anwender!
+        echo Der freie Speicherplatz betrÑgt `mem` Bytes.
+        echo Auf Platte C: sind `df -f c:` Bytes frei.
+
+Setzt man nun die Zeilen 
+        hallo()
+        {
+an den Beginn und die Zeilen 
+        }
+        hallo
+an das Ende dieses Scripts, also so: 
+
+        hallo()
+        {
+          echo Hallo Anwender!
+          echo Der freie Speicherplatz betrÑgt `mem` Bytes.
+          echo Auf Platte C: sind `df -f c:` Bytes frei.
+        }
+        hallo
+
+,   so  wird beim Start des Scripts die Shellfunktion hallo installiert,
+und  bei jedem weiteren Aufruf von hallo wird nicht das Script,  sondern
+die Funktion aufgerufen. Mit dem Kommando 
+
+                              unset hallo 
+
+kann man die Funktion wieder aus dem Speicher entfernen. 
+
+Die   Shellfunktionen   machen   Åbrigens   eine  alias-Funktion  vîllig
+ÅberflÅssig,   da  sie auch benutzt werden kînnen,  um interne Kommandos
+umzudefinieren: Wer anstelle von ls lieber ls -C hat, gibt einfach ein 
+
+        ls()
+        {
+          !ls -C $*
+        }
+
+Das Ausrufezeichen verhindert,  daû sich die ls-Funktion selber aufruft.
+!ls  ist  immer  das interne Kommando ls.  Wer irgendwann das normale ls
+benutzen will, kann das tun, indem er es als !ls aufruft. 
+
+Ebenso helfen Shellfunktionen,  Tippfehler zu vermeiden; wer stÑndig dor
+oder dior statt dir tippt, versuche 
+
+        dior()
+        {
+          dir $*
+        }
+
+(Wer sich wundert,  daû die Okami-Shell trotzdem ein alias-Kommando hat:
+das  dient  nur  dazu,   das Anlegen dieser Mini-Funktionen einfacher zu
+gestalten  und  um Shellscripts anderer Shells ausfÅhren zu kînnen.  Man
+kann also ebenso schreiben: 
+                            alias ls !ls -C 
+und 
+                            alias dior dir 
+.) 
+
+Mein  Unix-Tippfehler-Script  enthÑlt  mehrere Dutzend Schreibweisen der
+hÑufig  benutzten  Kommandos  wie dir,  grep und der Make-Aufrufe xmake,
+qmake und remake. 
+
+Besondere   Funktionen  haben  die  vordefinierten  (aber  vom  Anwender
+vollstÑndig umdefinierbaren) Shellfunktionen gemexec und screensave, die
+in den folgenden Abschnitten beschrieben werden. 
+
+---------------------------------------------------------------------------
+
+
+
+DIE GEMEXEC-FUNKTION
+
+Mit  der  kann  man wirklich einiges machen,  denn sie gibt dem Anwender
+die  Mîglichkeit,  das Verhalten der Shell beim Start von GEM-Programmen
+frei   zu   programmieren.    Dabei   stehen   ihm  alle  die  nicht  zu
+unterschÑtzenden Funktionen der Shell zur VerfÅgung. 
+
+Die  folgende  gemexec-Funktion  kann  benutzt werden,  um nach dem Ende
+eines  GEM-Programms  den Bildschirm wieder so herzustellen,  wie er vor
+dem Aufruf war. 
+Dazu   werden  die  internen  Kommandos  getscr  und  putscr  sowie  die
+VT52-Sequenzen  zum  Speichern  und  Wiederherstellen der Cursorposition
+benutzt.    Dabei  werden  allerdings  32000  Bytes  zum  Speichern  des
+Bildschirminhaltes  belegt.  Aus diesem Grund speichert die Funktion den
+Bildschirm  nur  dann,  wenn die Shellvariable SAVESCR gesetzt ist.  Man
+kann das Spei
